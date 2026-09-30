@@ -116,50 +116,54 @@ case $1 in
     ;;
 esac
 
+echo "URL is: $url"
+
 tempdir=${RUNNER_TEMP:-/home/actions/temp}/arm-runner
-rm -rf ${tempdir}
-mkdir -p ${tempdir}
+if [[ ! -f "${tempdir}/arm-runner.img" ]]; then
+    rm -rf ${tempdir}
+    mkdir -p ${tempdir}
+    cd ${tempdir}
+    wget -q --trust-server-names --content-disposition --user-agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36" ${url}
+    case `echo *` in
+        *.zip)
+            unzip -u *
+        ;;
+        *.7z)
+            7zr e *
+        ;;
+        *.xz)
+            xz -T0 -d *
+        ;;
+        *.gz)
+            gzip -d *
+        ;;
+        *.img)
+        ;;
+        *.zip\?*)
+            unzip -u *
+        ;;
+        *.7z\?*)
+            7zr e *
+        ;;
+        *.xz\?*)
+            xz -T0 -d *
+        ;;
+        *.gz\?*)
+            gzip -d *
+        ;;
+        *)
+            echo "Don't know how to uncompress image " *
+            exit 1
+    esac
+    # support Switchroot L4T Image format
+    PATTERN="l4t.*"
+    if compgen -G $PATTERN > /dev/null; then
+        cat l4t.* > arm-runner.img
+    else
+        mv "$(ls *.img */*.img 2>/dev/null | head -n 1)" arm-runner.img
+    fi
+fi
 cd ${tempdir}
-case ${url} in
-    file://localhost/*)
-        cp "${url#file://localhost}" .
-    ;;
-    file:///*)
-        cp "${url#file://}" .
-    ;;
-    https:/*|http:/*)
-        wget --trust-server-names --content-disposition -q ${url}
-esac
-case `echo *` in
-    *.zip)
-        unzip -u *
-    ;;
-    *.7z)
-        7zr e *
-    ;;
-    *.xz)
-        xz -d *
-    ;;
-    *.gz)
-        gzip -d *
-    ;;
-    *.img)
-    ;;
-    *.zip\?*)
-        unzip -u *
-    ;;
-    *.7z\?*)
-        7zr e *
-    ;;
-    *.xz\?*)
-        xz -d *
-    ;;
-    *.gz\?*)
-        gzip -d *
-    ;;
-    *)
-        echo "Don't know how to uncompress image " *
-        exit 1
-esac
-mv "$(ls *.img */*.img 2>/dev/null | head -n 1)" arm-runner.img
+find . -type f -not -name 'arm-runner.img' -delete
+ls -l ${tempdir}
 echo "image=${tempdir}/arm-runner.img" >> "$GITHUB_OUTPUT"

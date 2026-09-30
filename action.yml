@@ -92,6 +92,10 @@ inputs:
     description: 'Enable Raspberry Pi OverlayFS root in the produced image (regenerates initramfs against the image kernel and updates cmdline.txt / config.txt)'
     required: false
     default: 'no'
+  no_qemu:
+    description: 'Do not install QEMU, at all'
+    required: false
+    default: 'no'
 outputs:
   image:
     description: "Path to image"
@@ -103,10 +107,12 @@ runs:
       run: |
         sudo apt-get update
         qemu_pkg=()
-        if apt-cache dump | grep -q '^Package: qemu-user-static$'; then
-            test -x /usr/bin/qemu-arm-static && test -x /usr/bin/qemu-aarch64-static || qemu_pkg=('qemu-user-static')
-        else
-            test -x /usr/bin/qemu-arm && test -x /usr/bin/qemu-aarch64 || qemu_pkg=('qemu-user-binfmt')
+        if [ "${{ inputs.no_qemu }}x" != "x" -a "${{ inputs.no_qemu }}x" != "nox" ]; then
+          if apt-cache dump | grep -q '^Package: qemu-user-static$'; then
+              test -x /usr/bin/qemu-arm-static && test -x /usr/bin/qemu-aarch64-static || qemu_pkg=('qemu-user-static')
+          else
+              test -x /usr/bin/qemu-arm && test -x /usr/bin/qemu-aarch64 || qemu_pkg=('qemu-user-binfmt')
+          fi
         fi
         sudo apt-get install -y binfmt-support parted wget dosfstools zip "${qemu_pkg[@]}"
         if dpkg --compare-versions "$(dpkg-query -W -f '${Version}' e2fsprogs)" lt 1.47; then

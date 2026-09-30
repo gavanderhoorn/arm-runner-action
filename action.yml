@@ -107,7 +107,7 @@ runs:
       run: |
         sudo apt-get update
         qemu_pkg=()
-        if [ "${{ inputs.no_qemu }}x" != "x" -a "${{ inputs.no_qemu }}x" != "nox" ]; then
+        if [ "${{ inputs.no_qemu }}x" != "x" -a "${{ inputs.no_qemu }}x" == "nox" ]; then
           if apt-cache dump | grep -q '^Package: qemu-user-static$'; then
               test -x /usr/bin/qemu-arm-static && test -x /usr/bin/qemu-aarch64-static || qemu_pkg=('qemu-user-static')
           else

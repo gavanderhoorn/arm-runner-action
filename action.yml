@@ -159,12 +159,12 @@ runs:
         aarch64_cpu=${cpu#*:}
         case "$(uname -m)" in
         aarch64)
-            register_arm=yes
+            register_arm=no
             register_aarch64=no
         ;;
         armv6l|armv7l)
             register_arm=no
-            register_aarch64=no
+            register_aarch64=yes
         ;;
         *)
             register_arm=yes
@@ -371,12 +371,12 @@ runs:
       run: |
         case "$(uname -m)" in
         aarch64)
-            register_arm=yes
+            register_arm=no
             register_aarch64=no
         ;;
         armv6l|armv7l)
             register_arm=no
-            register_aarch64=no
+            register_aarch64=yes
         ;;
         *)
             register_arm=yes
